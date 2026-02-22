@@ -1,0 +1,73 @@
+version: '3.9'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:latest
+    container_name: assetbridge-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: assetbridge-nexus
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API Server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: assetbridge-backend
+    ports:
+      - "3001:3001"
+    environment:
+      BACKEND_PORT: 3001
+      MONGODB_URI: mongodb://mongodb:27017/assetbridge-nexus
+      JWT_SECRET: dev-secret-key-change-in-production
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+      ETHEREUM_INFURA_URL: ${ETHEREUM_INFURA_URL}
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      PERSONA_API_KEY: ${PERSONA_API_KEY}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - ./backend/src:/app/src
+    command: npm run dev
+
+  # Frontend Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: assetbridge-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXT_PUBLIC_INFURA_KEY: ${NEXT_PUBLIC_INFURA_KEY}
+      NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID: ${NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID}
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  default:
+    name: assetbridge-network
+    driver: bridge
+

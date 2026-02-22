@@ -1,0 +1,142 @@
+name: Smart Contract Testing
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'contracts/**'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'contracts/**'
+
+jobs:
+  test:
+    name: Contract Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Cache Hardhat
+        uses: actions/cache@v3
+        with:
+          path: |
+            contracts/node_modules
+            contracts/.hardhat
+          key: ${{ runner.os }}-hardhat-${{ hashFiles('contracts/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-hardhat-
+      
+      - name: Install dependencies
+        run: cd contracts && npm install
+      
+      - name: Compile contracts
+        run: cd contracts && npx hardhat compile
+      
+      - name: Run unit tests
+        run: cd contracts && npm test
+      
+      - name: Check contract size
+        run: cd contracts && npx hardhat size-contracts --mode check
+        continue-on-error: true
+      
+      - name: Generate coverage report
+        run: cd contracts && npm run coverage
+      
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./contracts/coverage/coverage.json
+          flags: contracts
+          name: contract-coverage
+
+  gas-report:
+    name: Gas Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: cd contracts && npm install
+      
+      - name: Generate gas report
+        run: cd contracts && REPORT_GAS=true npm test
+        env:
+          COINMARKETCAP_API_KEY: ${{ secrets.COINMARKETCAP_API_KEY }}
+      
+      - name: Upload gas report
+        uses: actions/upload-artifact@v3
+        with:
+          name: gas-report
+          path: contracts/gas-report.txt
+
+  audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: cd contracts && npm install
+      
+      - name: Run Slither analysis
+        uses: crytic/slither-action@v0.1
+        with:
+          node-version: 18
+          solc-version: 0.8.20
+          target: contracts/
+        continue-on-error: true
+
+  deploy-testnet:
+    name: Deploy to Testnet
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    needs: test
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: cd contracts && npm install
+      
+      - name: Deploy to Sepolia
+        run: cd contracts && npx hardhat run scripts/deploy.ts --network sepolia
+        env:
+          PRIVATE_KEY: ${{ secrets.TESTNET_PRIVATE_KEY }}
+          ETHEREUM_INFURA_URL: ${{ secrets.ETHEREUM_INFURA_URL }}
+      
+      - name: Verify contracts
+        run: cd contracts && npx hardhat verify --network sepolia $(cat deployments/sepolia-deployment.json | jq -r '.assetVault')
+        continue-on-error: true
+      
+      - name: Update deployment info
+        run: |
+          DEPLOYMENT=$(cat contracts/deployments/sepolia-deployment.json)
+          echo "## Sepolia Deployment" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          echo "$DEPLOYMENT" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

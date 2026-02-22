@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+.nyc_output/
+
+# Production
+build/
+dist/
+out/
+.next/
+.swc/
+
+# Misc
+.DS_Store
+*.pem
+.env.local
+.env.*.local
+.env
+.env.example.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Hardhat
+artifacts/
+cache/
+deployments/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache

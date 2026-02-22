@@ -1,0 +1,27 @@
+{
+  "name": "assetbridge-nexus-contracts",
+  "version": "0.1.0",
+  "description": "Smart contracts for AssetBridge Nexus RWA Platform",
+  "scripts": {
+    "test": "hardhat test",
+    "compile": "hardhat compile",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
+    "deploy:polygon": "hardhat run scripts/deploy.js --network polygon-mumbai",
+    "verify": "hardhat verify"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.0",
+    "@chainlink/contracts": "^0.8.0",
+    "hardhat": "^2.18.3",
+    "ethers": "^6.10.0"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "@nomiclabs/hardhat-etherscan": "^3.1.7",
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.2",
+    "chai": "^4.3.10",
+    "@nomicfoundation/hardhat-ethers": "^3.0.5",
+    "hardhat-gas-reporter": "^1.0.9",
+    "solidity-coverage": "^0.8.5"
+  }
+}
