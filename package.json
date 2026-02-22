@@ -4,6 +4,7 @@
   "description": "Full-stack hybrid RWA platform for private credit and tokenized assets",
   "type": "module",
   "scripts": {
+    "dev": "npm run dev:backend & npm run dev:frontend",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && npm run dev",
     "build:frontend": "cd frontend && npm run build",
