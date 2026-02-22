@@ -7,12 +7,12 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 
 // Import routes
-import creditRoutes from './routes/credit';
-import vaultRoutes from './routes/vault';
-import userRoutes from './routes/user';
-import authRoutes from './routes/auth';
-import premiumRoutes from './routes/premium';
-import kycRoutes from './routes/kyc';
+import creditRoutes from './routes/credit.js';
+import vaultRoutes from './routes/vault.js';
+import userRoutes from './routes/user.js';
+import authRoutes from './routes/auth.js';
+import premiumRoutes from './routes/premium.js';
+import kycRoutes from './routes/kyc.js';
 
 // Load environment variables
 dotenv.config();
